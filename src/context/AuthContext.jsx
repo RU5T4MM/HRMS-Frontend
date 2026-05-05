@@ -18,12 +18,20 @@ export const AuthProvider = ({ children }) => {
         withCredentials: true
     });
 
+    // Dynamically attach token to every request
+    api.interceptors.request.use((config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    });
+
     useEffect(() => {
         const checkLoggedIn = async () => {
             try {
                 const token = localStorage.getItem('token');
                 if (token) {
-                    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                     const res = await api.get('/auth/me');
                     setUser(res.data.data);
                 }
@@ -43,7 +51,6 @@ export const AuthProvider = ({ children }) => {
             setError(null);
             const res = await api.post('/auth/login', { email, password });
             localStorage.setItem('token', res.data.token);
-            api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
             setUser(res.data.user);
             return res.data.user;
         } catch (err) {
@@ -55,11 +62,11 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await api.get('/auth/logout');
-            localStorage.removeItem('token');
-            delete api.defaults.headers.common['Authorization'];
-            setUser(null);
         } catch (err) {
             console.error(err);
+        } finally {
+            localStorage.removeItem('token');
+            setUser(null);
         }
     };
 
@@ -69,7 +76,6 @@ export const AuthProvider = ({ children }) => {
             // Default role is 'employee'
             const res = await api.post('/auth/register', { name, email, password, department, role: 'employee' });
             localStorage.setItem('token', res.data.token);
-            api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
             setUser(res.data.user);
             return res.data.user;
         } catch (err) {

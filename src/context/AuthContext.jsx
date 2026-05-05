@@ -9,7 +9,8 @@ export const AuthProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    const finalApiUrl = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
+    const cleanUrl = rawApiUrl.replace(/\/+$/, '');
+    const finalApiUrl = cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
 
     // Axios configuration
     const api = axios.create({
